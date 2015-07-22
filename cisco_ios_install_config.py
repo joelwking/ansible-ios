@@ -8,6 +8,7 @@
      Revision history:
      26 June 2015  |  1.0 - initial release
      22 July 2015  |  1.1 - handle exceptions if SSH is refused by host
+                      1.2 - better error message reporting for config errors
 
 """
 
@@ -15,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_install_config
 author: Joel W. King, World Wide Technology
-version_added: "1.1"
+version_added: "1.2"
 short_description: Updates the configuration of an IOS router or switch over the network.
 description:
     - This module saves the existing running configuration, updates the configuration over the network, and
@@ -365,7 +366,7 @@ def main():
                     module.fail_json(changed=True, msg="Configuration updated, failure on save to NVRAM.")
             else:
                 node.logoff
-                module.fail_json(msg="Failed to update configuration.")
+                module.fail_json(msg="Failed to update configuration:%s" % node.get_error_msg())
         else:
             node.logoff
             module.fail_json(msg="Save config failure.")
