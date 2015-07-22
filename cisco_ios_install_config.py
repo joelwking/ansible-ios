@@ -7,6 +7,7 @@
 
      Revision history:
      26 June 2015  |  1.0 - initial release
+     22 July 2015  |  1.1 - handle exceptions if SSH is refused by host
 
 """
 
@@ -14,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_install_config
 author: Joel W. King, World Wide Technology
-version_added: "1.0"
+version_added: "1.1"
 short_description: Updates the configuration of an IOS router or switch over the network.
 description:
     - This module saves the existing running configuration, updates the configuration over the network, and
@@ -241,6 +242,9 @@ class IOS(object):
             return False
         except paramiko.ssh_exception.SSHException as msg:
             self.error_msg = str(msg)
+            return False
+        except:
+            self.error_msg = "No connection could be made to target machine"
             return False
 
         self.ssh = self.ssh_conn.invoke_shell()
