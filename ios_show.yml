@@ -1,0 +1,56 @@
+#!/usr/bin/ansible-playbook
+---
+- name:  Issue a series of show commands to an IOS device and collect the output
+  hosts:  IOS_routers
+  connection: local
+  gather_facts: no
+
+  vars:
+   runcmd:
+     - show running-config
+     - show version
+     - show license
+     - show inventory
+     - show module
+     - show cdp neighbor detail
+     - show spanning-tree
+     - show vlan
+     - show interface trunk
+     - show etherchannel
+     - show interface port channel
+     - show processes cpu
+     - show environment all
+     - show ip protocols
+     - show ip route
+     - show ip bgp
+     - show ip bgp summary
+     - show ip bgp neighbor detail
+     - show ip ospf neighbor
+     - show ip ospf interface
+     - show ip ospf database
+     - show ip ospf neighbor detail
+     - show ip interface brief
+     - show ntp status
+     - show logging
+     - show policy-map
+     - show policy-map interface
+     - show ip sla statistics
+     - show ip sla statistics detail
+     - show ip sla statistics aggregate
+     - show something not valid for testing
+
+  tasks:
+  - name: Decrypt the password file
+    include_vars: "./passwords.yml"
+
+  - name: Issue the commands specified in the list runcmd and output to a file
+    cisco_ios_show:
+      host: "{{inventory_hostname}}"
+      username: "{{username}}"
+      password: "{{password}}"
+      enablepw: "{{enablepw}}"
+      commands: "{{runcmd}}"
+      dest: "{{dest}}"
+      debug: "{{debug}}"
+~
+
