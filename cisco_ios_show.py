@@ -255,7 +255,7 @@ class IOS(object):
         " Create a unique output filename and open it for writing, check if user included trailing slash "
         if destination_directory[-1] == "/":
             destination_directory = destination_directory[:-1]
-        self.output_file = "%s/%s_%s%s.log" % (destination_directory, self.output_file, hostname, time.strftime("%j"))
+        self.output_file = "%s/%s_%s_%s.log" % (destination_directory, self.output_file, hostname, time.strftime("%j"))
         try:
             self.fileObj  = open(self.output_file , "a")
         except:
