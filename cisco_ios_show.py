@@ -2,11 +2,12 @@
 #
 #
 """
-     Copyright (c) 2015 World Wide Technology, Inc. 
-     All rights reserved. 
+     Copyright (c) 2015 World Wide Technology, Inc.
+     All rights reserved.
 
      Revision history:
      10 December 2015  |  1.0 - initial release
+     12 Deceb,er 2015  |  1.1 - PEP 8 updates
 
 """
 
@@ -14,12 +15,11 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_show
 author: Joel W. King, World Wide Technology
-version_added: "1.0"
+version_added: "1.1"
 short_description: Issues show commands to IOS devices
 description:
-    - UPDATE this section
+    - This module issues a list of show commands to Cisco IOS based network devices, captures the results of the commands in a file.
 
- 
 requirements:
     - paramiko can be a little hacky to install, some notes to install:
         sudo apt-get install python-dev
@@ -83,11 +83,7 @@ EXAMPLES = """
 """
 
 import paramiko
-import hashlib
-import json
 import time
-import datetime
-import sys
 
 # ---------------------------------------------------------------------------
 # IOS
@@ -96,7 +92,7 @@ import sys
 class IOS(object):
     """ Class for managing the SSH connection and updating a router or switch
         configuration from a remote host
-    """    
+    """
     ENABLE = 15                                            # Privilege EXEC mode
     USER = 1                                               # User EXEC mode
     ERROR = ["Error opening", "Invalid input"]             # Possible error messages from IOS
@@ -104,13 +100,13 @@ class IOS(object):
     TIMER = 3.0                                            # Paces the command and response from node, seconds
     BUFFER_LEN = 4096                                      # length of buffer to receive in bytes
 
-    def __init__(self, ssh_conn = None):
+    def __init__(self, ssh_conn=None):
 
         self.enable = None
         self.debug = False
         self.hostname = "router"
         self.output_file = "cis_"
-        self.fileObj = None
+        self.file_obj = None
         self.error_msg = None
         self.privilege = IOS.USER                          # <0-15>  User privilege level, default is 1
         self.ssh_conn = ssh_conn                           # paramiko has two objects, a connect object
@@ -124,9 +120,9 @@ class IOS(object):
         "Set terminal line parameters"
 
         self.__send_command("terminal width %s\n" % width)
-        output = self.__get_output()
+        self.__get_output()
         self.__send_command("terminal length %s\n" % length)
-        output = self.__get_output()
+        self.__get_output()
         return
 
 
@@ -150,13 +146,13 @@ class IOS(object):
         output = ""
         while self.ssh.recv_ready():
             output = output + self.ssh.recv(IOS.BUFFER_LEN)
-        
+
         return output
 
 
 
     def __determine_privilege_level(self):
-        """ determine the hostname and privilege level 
+        """ determine the hostname and privilege level
            '\r\nisr-2911-a#' would be a privilege level of 15
            if there is a ">" at the end of the output string, we need to go into enable mode
            if there is a "#" at the end, we are already in enable mode
@@ -177,19 +173,19 @@ class IOS(object):
            after logon, the buffer will contain the banner exec and MOTD text, clear it!
            you might have both a banners, hit return once.
         """
-       
+
         self.__send_command("\n")
-        output = self.__get_output()
+        self.__get_output()
         return
 
 
 
-    def login(self, hostname, user, pw):
+    def login(self, hostname, user, password):
         " Logon the node, clear MOTD banners and set the terminal width and length"
-      
+
         self.hostname = hostname
         try:
-            self.ssh_conn.connect(hostname, timeout=3.9, username=user, password=pw)
+            self.ssh_conn.connect(hostname, timeout=3.9, username=user, password=password)
         except paramiko.ssh_exception.AuthenticationException as msg:
             self.error_msg = str(msg)
             return False
@@ -214,6 +210,7 @@ class IOS(object):
         return self.ssh.closed
 
 
+
     def get_error_msg(self):
         " return error messages saved from exceptions when attempting to login the host"
         return self.error_msg
@@ -226,9 +223,8 @@ class IOS(object):
             self.debug = True
 
 
-
     def enable_mode(self, enable):
-        """ Enter enable mode if required. """
+        " Enter enable mode if required. "
         self.enable = enable
         if self.__determine_privilege_level() == IOS.ENABLE:
             return True
@@ -245,8 +241,8 @@ class IOS(object):
 
 
     def close_output_file(self):
-        " "
-        self.fileObj.close()
+        " Close the output file."
+        self.file_obj.close()
         return
 
 
@@ -257,38 +253,41 @@ class IOS(object):
             destination_directory = destination_directory[:-1]
         self.output_file = "%s/%s_%s_%s.log" % (destination_directory, self.output_file, hostname, time.strftime("%j"))
         try:
-            self.fileObj  = open(self.output_file , "a")
+            self.file_obj = open(self.output_file, "a")
         except:
             return False
         return True
 
 
+
     def issue_commands(self, commands):
         "the playbook as provided us a list of commands to issue against the device."
-        self.fileObj.write(" ### %s %s ###\r\n" % (time.asctime(), self.hostname))
+        self.file_obj.write(" ### %s %s ###\r\n" % (time.asctime(), self.hostname))
         for item in commands:
             self.__send_command("%s\n" % item)
             output = self.__get_output()
-            self.fileObj.write(output)
+            self.file_obj.write(output)
         return True
+
+
 
 # ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
 
 def main():
-    " "
+    "main"
 
     module = AnsibleModule(
-        argument_spec = dict(          
-            host = dict(required=True),
-            username = dict(required=True),
-            password  = dict(required=True),
-            enablepw = dict(required=False),
-            commands = dict(required=True),
-            dest = dict(required=True),
-            debug = dict(required=False)
-         ),
+        argument_spec=dict(
+            host=dict(required=True),
+            username=dict(required=True),
+            password=dict(required=True),
+            enablepw=dict(required=False),
+            commands=dict(required=True),
+            dest=dict(required=True),
+            debug=dict(required=False)
+        ),
         check_invalid_arguments=False,
         add_file_common_args=True
     )
@@ -301,29 +300,28 @@ def main():
     else:
         module.fail_json(msg="Error opening output file.")
 
-   
+
     if node.login(module.params["host"], module.params["username"], module.params["password"]):
         try:
             if node.enable_mode((module.params["enablepw"])):
                 pass
             else:
-                node.logoff
+                node.logoff()
                 module.fail_json(msg="Enable password specified and an error occured entering enable mode.")
         except KeyError:
             pass                                           # Enable password not specified, which is OK.
 
         if node.issue_commands(module.params["commands"]):
-            node.logoff
+            node.logoff()
             module.exit_json(changed=False, content="Success.")
         else:
-            node.logoff
+            node.logoff()
             module.fail_json(msg="Error issuing commands.")
     else:
         module.fail_json(msg=node.get_error_msg())
 
-    
 
-                                  
+
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
