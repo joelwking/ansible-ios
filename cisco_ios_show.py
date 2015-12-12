@@ -102,7 +102,7 @@ class IOS(object):
     ERROR = ["Error opening", "Invalid input"]             # Possible error messages from IOS
     COPY = ["[OK]", "bytes copied"]                        # Possible success criteria for copy command
     TIMER = 3.0                                            # Paces the command and response from node, seconds
-    BUFFER_LEN = 32768                                     # length of buffer to receive in bytes
+    BUFFER_LEN = 4096                                      # length of buffer to receive in bytes
 
     def __init__(self, ssh_conn = None):
 
@@ -138,8 +138,6 @@ class IOS(object):
         """
 
         time.sleep((timer / 2))                            # Short nap before we get started
-        if self.debug:
-            logger.info('%s SENT:%s' % (self.hostname, command.translate(None, "\n\r")))
         self.ssh.send(command)
         time.sleep(timer)                                  # Allow time for the command output to return
         return
@@ -153,8 +151,6 @@ class IOS(object):
         while self.ssh.recv_ready():
             output = output + self.ssh.recv(IOS.BUFFER_LEN)
         
-        if self.debug:
-            logger.info('%s RECV:%s' % (self.hostname, output.translate(None, "\n\r")))
         return output
 
 
@@ -247,18 +243,18 @@ class IOS(object):
 
 
 
-    def close_output_file():
+    def close_output_file(self):
         " "
         self.fileObj.close()
         return
 
 
 
-    def open_output_file(destination_directory):
+    def open_output_file(self, destination_directory):
         " Create a unique output filename and open it for writing, check if user included trailing slash "
         if destination_directory[-1] == "/":
             destination_directory = destination_directory[:-1]
-        self.output_file = "%s/%s%s.log" % (destination_directory, self.output_file, time.strftime("%j")
+        self.output_file = "%s/%s_%s%s.log" % (destination_directory, self.output_file, self.hostname, time.strftime("%j"))
         try:
             self.fileObj  = open(self.output_file , "a")
         except:
@@ -266,13 +262,12 @@ class IOS(object):
         return True
 
 
-    def issue_commands(commands):
-        "the playbook as provided us a list of commands to issue against the device.
-        self.fileObj.write(" ###" +  time.asctime() + " ###")
+    def issue_commands(self, commands):
+        "the playbook as provided us a list of commands to issue against the device."
+        self.fileObj.write(" ### %s %s ###\r\n" % (time.asctime(), self.hostname)
         for item in commands:
-            self.__send_command(item)
+            self.__send_command("%s\n" % item)
             output = self.__get_output()
-            self.fileObj.write(item)
             self.fileObj.write(output)
         return True
 
@@ -303,7 +298,7 @@ def main():
     if node.open_output_file(module.params["dest"]):
         pass
     else:
-        module.fail_json(msg="Error opening output file.)
+        module.fail_json(msg="Error opening output file.")
 
    
     if node.login(module.params["host"], module.params["username"], module.params["password"]):

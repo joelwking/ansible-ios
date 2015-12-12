@@ -37,7 +37,6 @@
      - show ip sla statistics
      - show ip sla statistics detail
      - show ip sla statistics aggregate
-     - show something not valid for testing
 
   tasks:
   - name: Decrypt the password file
