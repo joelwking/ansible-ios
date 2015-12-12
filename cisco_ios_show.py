@@ -184,11 +184,12 @@ class IOS(object):
 
 
 
-    def login(self, ip, user, pw):
+    def login(self, hostname, user, pw):
         " Logon the node, clear MOTD banners and set the terminal width and length"
       
+        self.hostname = hostname
         try:
-            self.ssh_conn.connect(ip, timeout=3.9, username=user, password=pw)
+            self.ssh_conn.connect(hostname, timeout=3.9, username=user, password=pw)
         except paramiko.ssh_exception.AuthenticationException as msg:
             self.error_msg = str(msg)
             return False
@@ -250,11 +251,11 @@ class IOS(object):
 
 
 
-    def open_output_file(self, destination_directory):
+    def open_output_file(self, destination_directory, hostname):
         " Create a unique output filename and open it for writing, check if user included trailing slash "
         if destination_directory[-1] == "/":
             destination_directory = destination_directory[:-1]
-        self.output_file = "%s/%s_%s%s.log" % (destination_directory, self.output_file, self.hostname, time.strftime("%j"))
+        self.output_file = "%s/%s_%s%s.log" % (destination_directory, self.output_file, hostname, time.strftime("%j"))
         try:
             self.fileObj  = open(self.output_file , "a")
         except:
@@ -264,7 +265,7 @@ class IOS(object):
 
     def issue_commands(self, commands):
         "the playbook as provided us a list of commands to issue against the device."
-        self.fileObj.write(" ### %s %s ###\r\n" % (time.asctime(), self.hostname)
+        self.fileObj.write(" ### %s %s ###\r\n" % (time.asctime(), self.hostname))
         for item in commands:
             self.__send_command("%s\n" % item)
             output = self.__get_output()
@@ -295,7 +296,7 @@ def main():
     node = IOS(paramiko.SSHClient())
     node.set_debug(module.params["debug"])
 
-    if node.open_output_file(module.params["dest"]):
+    if node.open_output_file(module.params["dest"], module.params["host"]):
         pass
     else:
         module.fail_json(msg="Error opening output file.")
@@ -316,7 +317,7 @@ def main():
             module.exit_json(changed=False, content="Success.")
         else:
             node.logoff
-            module.fail_json(msg="Error issuing commands")
+            module.fail_json(msg="Error issuing commands.")
     else:
         module.fail_json(msg=node.get_error_msg())
 
