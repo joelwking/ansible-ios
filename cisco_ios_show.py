@@ -9,6 +9,7 @@
      10 December 2015  |  1.0 - initial release
      12 December 2015  |  1.1 - PEP 8 updates
      13 December 2015  |  1.2 - Enable password logic enhancements
+                          1.3 - corrected documentation formatting
 
 """
 
@@ -16,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_show
 author: Joel W. King, World Wide Technology
-version_added: "1.2"
+version_added: "1.3"
 short_description: Issues show commands to IOS devices
 description:
     - This module issues a list of show commands to Cisco IOS based network devices, captures the results of the commands in a file.
@@ -56,7 +57,7 @@ options:
     debug:
         description:
             - A switch to enable debug logging to a file. Use a value of 'on' to enable.
-         required: false
+        required: false
 
 """
 EXAMPLES = """
