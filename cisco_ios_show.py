@@ -7,7 +7,8 @@
 
      Revision history:
      10 December 2015  |  1.0 - initial release
-     12 Deceb,er 2015  |  1.1 - PEP 8 updates
+     12 December 2015  |  1.1 - PEP 8 updates
+     13 December 2015  |  1.2 - Enable password logic enhancements
 
 """
 
@@ -15,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_show
 author: Joel W. King, World Wide Technology
-version_added: "1.1"
+version_added: "1.2"
 short_description: Issues show commands to IOS devices
 description:
     - This module issues a list of show commands to Cisco IOS based network devices, captures the results of the commands in a file.
@@ -102,10 +103,10 @@ class IOS(object):
 
     def __init__(self, ssh_conn=None):
 
-        self.enable = None
+        self.enable = None                                 # Enable mode is an optional parameter
         self.debug = False
         self.hostname = "router"
-        self.output_file = "cis_"
+        self.output_file = "cis"                           # prefix for the output file(s)
         self.file_obj = None
         self.error_msg = None
         self.privilege = IOS.USER                          # <0-15>  User privilege level, default is 1
@@ -212,19 +213,25 @@ class IOS(object):
 
 
     def get_error_msg(self):
-        " return error messages saved from exceptions when attempting to login the host"
+        " return error messages saved from exceptions when attempting to login the host."
         return self.error_msg
 
 
 
     def set_debug(self, value):
-        "set the debug value, the variable value, could be a NoneType"
+        "set the debug value, the variable value, could be a NoneType if not specified."
         if str(value) in "true True on On":
             self.debug = True
 
 
     def enable_mode(self, enable):
-        " Enter enable mode if required. "
+        """ Enter enable mode if required. As it is optional, Ansible will pass the value as None (type 'NoneType') 
+            test if not provided and exit true, assuming that there are no commands which require enable mode to issue.
+            Test if we are already in enable mode and also return True, otherwise, provide the enable password.
+        """ 
+        if enable is None:
+            return True
+
         self.enable = enable
         if self.__determine_privilege_level() == IOS.ENABLE:
             return True
@@ -300,18 +307,15 @@ def main():
     else:
         module.fail_json(msg="Error opening output file.")
 
-
+                                                           # LOGIN
     if node.login(module.params["host"], module.params["username"], module.params["password"]):
-        try:
-            if node.enable_mode((module.params["enablepw"])):
-                pass
-            else:
-                node.logoff()
-                module.fail_json(msg="Enable password specified and an error occured entering enable mode.")
-        except KeyError:
-            pass                                           # Enable password not specified, which is OK.
+        if node.enable_mode((module.params["enablepw"])):  # ENABLE MODE
+            pass
+        else:
+            node.logoff()
+            module.fail_json(msg="Enable password specified and an error occured entering enable mode.")
 
-        if node.issue_commands(module.params["commands"]):
+        if node.issue_commands(module.params["commands"]): # ISSUE COMMANDS
             node.logoff()
             module.exit_json(changed=False, content="Success.")
         else:
