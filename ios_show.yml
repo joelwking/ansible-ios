@@ -1,5 +1,12 @@
 #!/usr/bin/ansible-playbook
 ---
+#
+#      Copyright (c) 2015 World Wide Technology, Inc.
+#      All rights reserved.
+#
+#      author: Joel W. King, World Wide Technology
+#
+#
 - name:  Issue a series of show commands to an IOS device and collect the output
   hosts:  IOS_routers
   connection: local
@@ -47,9 +54,7 @@
       host: "{{inventory_hostname}}"
       username: "{{username}}"
       password: "{{password}}"
-      enablepw: "{{enablepw}}"
+      enablepw: "{{enable_password}}"                      # Optional
       commands: "{{runcmd}}"
       dest: "{{dest}}"
-      debug: "{{debug}}"
-
-
+      debug: "{{debug}}"                                   # Optional
