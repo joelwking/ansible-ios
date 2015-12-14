@@ -23,10 +23,10 @@ description:
     - This module issues a list of show commands to Cisco IOS based network devices, captures the results of the commands in a file.
 
 requirements:
-    - paramiko can be a little hacky to install, some notes to install:
-        sudo apt-get install python-dev
-        sudo pip install pycrypto
-        sudo pip install ecdsa
+    - paramiko can be a little hacky to install, some notes to install
+        - sudo apt-get install python-dev
+        - sudo pip install pycrypto
+        - sudo pip install ecdsa
 
 options:
     host:
