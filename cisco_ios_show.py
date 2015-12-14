@@ -24,9 +24,9 @@ description:
 
 requirements:
     - paramiko can be a little hacky to install, some notes to install
-        - sudo apt-get install python-dev
-        - sudo pip install pycrypto
-        - sudo pip install ecdsa
+    - sudo apt-get install python-dev
+    - sudo pip install pycrypto
+    - sudo pip install ecdsa
 
 options:
     host:
