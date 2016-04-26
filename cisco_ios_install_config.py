@@ -9,6 +9,7 @@
      26 June 2015  |  1.0 - initial release
      22 July 2015  |  1.1 - handle exceptions if SSH is refused by host
                       1.2 - better error message reporting for config errors
+     26 April 2016 |  1.3 - Modifications to also run on IOS-XR
 
 """
 
@@ -16,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_install_config
 author: Joel W. King, World Wide Technology
-version_added: "1.2"
+version_added: "1.3"
 short_description: Updates the configuration of an IOS router or switch over the network.
 description:
     - This module saves the existing running configuration, updates the configuration over the network, and
@@ -54,6 +55,16 @@ options:
         description:
             - The URL where the configuration commands are stored.
         required: true
+
+    vrf:
+        description:
+            - The VRF to use for the copy command. If not specified, will not be provided on the command line.
+        required: false
+
+    saveconfig:
+        description:
+            - If no, don't attempt to save the configuration.
+        required: false
     
     debug:
         description:
@@ -300,8 +311,15 @@ class IOS(object):
 
 
 
-    def save_config(self, filename="startup-config"):
-        " By default, save to startup, otherwise, use the filename provided."
+    def save_config(self, saveflag, filename="startup-config"):
+        """ By default, save to startup, otherwise, use the filename provided."
+            determine if we should save the config, it could be a NoneType"
+        """
+        if str(saveflag) in "true True on On None":
+            pass
+        else:
+            return True                                    # Don't save the config
+
         self.__send_command("copy running-config %s \n" % filename)
         self.__send_command("\n")
         output = self.__get_output()
@@ -313,11 +331,19 @@ class IOS(object):
 
 
 
-    def update_config(self, URL):
-        "  Updates the running configuration from a remote file."
+    def update_config(self, URL, vrf):
+        """ 
+            Updates the running configuration from a remote file.
+            If a VRF is specified, use that for the copy command.
+        """
+
+        if vrf:
+            vrf = "vrf %s" % vrf
+        else:
+            vrf = ""                                       # VRF not specified
 
         self.URL = URL
-        self.__send_command("copy %s running-config\n" % URL)
+        self.__send_command("copy %s running-config %s\n" % (URL, vrf))
         self.__send_command("\n")                          # enter return to acknowledge.
         output = self.__get_output()
         for error in IOS.ERROR:
@@ -345,6 +371,8 @@ def main():
             username = dict(required=True),
             password  = dict(required=True),
             enablepw = dict(required=False),
+            vrf = dict(required=False),
+            saveconfig = dict(required=False),
             debug = dict(required=False)
          ),
         check_invalid_arguments=False,
@@ -356,9 +384,9 @@ def main():
 
     if node.login(module.params["host"], module.params["username"], module.params["password"]):  
         node.enable_mode((module.params["enablepw"]))
-        if node.save_config(filename=node.get_hashed_filename()):
-            if node.update_config(module.params["URI"]):
-                if node.save_config():
+        if node.save_config( module.params["saveconfig"], filename=node.get_hashed_filename()):
+            if node.update_config(module.params["URI"], module.params["vrf"]):
+                if node.save_config(module.params["saveconfig"]):
                     node.logoff
                     module.exit_json(changed=True, content="Success")
                 else:
