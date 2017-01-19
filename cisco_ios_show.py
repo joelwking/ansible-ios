@@ -10,6 +10,7 @@
      12 December 2015  |  1.1 - PEP 8 updates
      13 December 2015  |  1.2 - Enable password logic enhancements
                           1.3 - corrected documentation formatting
+     19 January  2017  |  1.4 - Playbook sends Command to the remote devices one letter at a time.
 
 """
 
@@ -17,7 +18,7 @@ DOCUMENTATION = """
 ---
 module: cisco_ios_show
 author: Joel W. King, World Wide Technology
-version_added: "1.3"
+version_added: "1.4"
 short_description: Issues show commands to IOS devices
 description:
     - This module issues a list of show commands to Cisco IOS based network devices, captures the results of the commands in a file.
@@ -52,6 +53,11 @@ options:
     dest:
         description:
             - The destination directory to write the output file.
+        required: true
+
+    commands:
+        description:
+            - list of commands to issue to the device
         required: true
     
     debug:
@@ -292,7 +298,7 @@ def main():
             username=dict(required=True),
             password=dict(required=True),
             enablepw=dict(required=False),
-            commands=dict(required=True),
+            commands=dict(type='list', required=True),
             dest=dict(required=True),
             debug=dict(required=False)
         ),
